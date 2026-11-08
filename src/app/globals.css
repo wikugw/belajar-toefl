@@ -226,3 +226,7 @@ summary:focus-visible{outline:2px solid var(--accent)}
 .sec-nav{display:flex;flex-wrap:wrap;gap:6px}
 /* Menyisakan ruang untuk nav supaya bar tes tidak menutupi judul section setelah pindah section. */
 #simRun{scroll-margin-top:72px}
+.plan .wk a{color:var(--k)}
+.guide .panel details:first-child{border-top:0;padding-top:0}
+.guide details .tbl,.guide details ul{margin-top:10px}
+.guide details .note{margin-top:10px}

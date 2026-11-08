@@ -1,3 +1,4 @@
+import { Guide } from "@/components/Guide";
 import { NeedTable } from "@/components/NeedTable";
 import { ScoreCalculator } from "@/components/ScoreCalculator";
 import { TargetValue } from "@/components/TargetValue";
@@ -5,6 +6,7 @@ import { TargetValue } from "@/components/TargetValue";
 export default function MulaiPage() {
   return (
     <section className="view">
+      <Guide />
       <div className="stack">
         <div className="eyebrow">Kenalan dulu</div>
         <h2>TOEFL ITP itu seperti apa?</h2>
