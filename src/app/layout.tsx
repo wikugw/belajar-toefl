@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Archivo, Atkinson_Hyperlegible, JetBrains_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="wrap">{children}</div>
         </main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
