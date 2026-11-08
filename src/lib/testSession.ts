@@ -1,7 +1,8 @@
 import { draftKey, type Draft } from "./draft";
+import { addToHistory } from "./history";
 import { resultOf } from "./questions";
 import { stopSpeech } from "./speech";
-import { KEYS, readStored, removeStored, writeStored, type Best, type HistoryEntry } from "./storage";
+import { readStored, removeStored, writeStored, type Best, type HistoryEntry } from "./storage";
 import { createStore } from "./store";
 import type { Category, Counts, Score, TestBlock, TestDef, TestItem } from "./types";
 
@@ -15,6 +16,8 @@ export type TestResult = {
   grp: Record<string, GroupStat>;
   date: Date;
   hist: HistoryEntry[];
+  /** Id di riwayat. null kalau detail tes gagal disimpan. */
+  recordId: string | null;
 };
 export type ReviewFilter = { f: "all" | "bad" | "ok"; topic: string | null };
 
@@ -178,13 +181,17 @@ export function finishTest() {
     if (!best || res.total > best.total) writeStored(key, { total: res.total });
   }
   const now = new Date();
-  const hist = [
-    { t: now.toISOString(), mode: def.id, pkg: def.pkg, total: res.total },
-    ...(readStored<HistoryEntry[]>(KEYS.history) || []),
-  ];
-  writeStored(KEYS.history, hist.slice(0, 20));
+  const { entry, hist } = addToHistory({
+    t: now.toISOString(),
+    meta: { id: def.id, pkg: def.pkg, counts: def.counts },
+    sections: s.sections,
+    ans,
+    c,
+    res,
+    grp,
+  });
   if (def.id === "untimed") removeStored(draftKey(def.pkg));
-  patch({ result: { c, res, grp, date: now, hist: hist.slice(0, 5) } });
+  patch({ result: { c, res, grp, date: now, hist: hist.slice(0, 5), recordId: entry.id ?? null } });
 }
 
 export function matchesFilter(item: RunItem, chosen: number | null, { f, topic }: ReviewFilter) {

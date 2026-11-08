@@ -10,7 +10,16 @@ export const KEYS = {
 };
 
 export type Best = { total: number };
-export type HistoryEntry = { t: string; mode: "full" | "short" | "untimed"; pkg: number | null; total: number };
+export type HistoryEntry = {
+  t: string;
+  mode: "full" | "short" | "untimed";
+  pkg: number | null;
+  total: number;
+  /** Kosong untuk tes lama atau kalau detailnya gagal disimpan. */
+  id?: string;
+  wrong?: number;
+  n?: number;
+};
 
 const cache = new Map<string, { raw: string | null; value: unknown }>();
 const listeners = new Set<() => void>();

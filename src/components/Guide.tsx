@@ -57,7 +57,10 @@ export function Guide() {
         <div className="wk c-read">
           <span>Langkah 4</span>
           <b>Pelajari hasilnya</b>
-          <p>Rapor menunjukkan topik yang lemah. Setiap soal dilengkapi kunci, pembahasan, dan materi belajar.</p>
+          <p>
+            Rapor menunjukkan topik yang lemah. Buka <Link href="/simulasi/riwayat">Riwayat</Link> untuk mengulang soal
+            yang salah atau menyimpan PDF.
+          </p>
         </div>
       </div>
       <div className="panel stack">
@@ -96,6 +99,10 @@ export function Guide() {
         <details>
           <summary>Hal yang perlu diketahui</summary>
           <ul className="tight">
+            <li>
+              <b>Riwayat menyimpan 10 tes terakhir.</b> Kamu bisa membuka lagi hasilnya, mengerjakan ulang soal yang
+              salah, dan menyimpannya sebagai PDF. Pengerjaan ulang tidak mengubah skor tes.
+            </li>
             <li>
               <b>Muat ulang menghapus tes yang berjalan.</b> Jawaban Tes Lengkap, Tes Singkat, dan latihan hilang kalau
               halaman dimuat ulang atau ditutup. Kalau perlu jeda, pakai Tes Lengkap Tanpa Waktu.

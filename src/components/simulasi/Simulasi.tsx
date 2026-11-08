@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { VoicePanel } from "../VoicePanel";
+import { useHistory } from "@/lib/history";
 import { testStore } from "@/lib/testSession";
 import { Report } from "./Report";
 import { TestChooser } from "./TestChooser";
@@ -11,6 +13,7 @@ export function Simulasi() {
   const session = testStore.use((s) => s);
   const stage = !session ? "choose" : session.result ? "result" : `section-${session.sec}`;
   const previous = useRef(stage);
+  const historyCount = useHistory().length;
 
   useEffect(() => {
     const from = previous.current;
@@ -27,6 +30,11 @@ export function Simulasi() {
         <b>Ini hanya simulasi untuk latihan.</b> Hasil tes di sini bukan skor resmi TOEFL ITP dan tidak berlaku untuk
         keperluan apa pun, termasuk pendaftaran kampus, beasiswa, atau pekerjaan.
       </p>
+      <div hidden={!!session}>
+        <Link className="btn ghost" href="/simulasi/riwayat">
+          Riwayat tes{historyCount ? ` (${historyCount})` : ""}
+        </Link>
+      </div>
       <TestChooser hidden={!!session} />
       <VoicePanel hidden={!!session} />
       <p className="note" hidden={!!session}>

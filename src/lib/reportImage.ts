@@ -1,3 +1,4 @@
+import type { TestMeta } from "./history";
 import type { TestResult } from "./testSession";
 import type { TestDef } from "./types";
 
@@ -5,7 +6,7 @@ export function formatDate(d: Date) {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export function testLabel(def: TestDef) {
+export function testLabel(def: Pick<TestDef, "id" | "pkg">) {
   if (def.id === "full") return `Tes Lengkap · Paket ${def.pkg}`;
   if (def.id === "untimed") return `Tes Lengkap Tanpa Waktu · Paket ${def.pkg}`;
   return `Tes Singkat · ${def.pkg ? `Paket ${def.pkg}` : "Acak"}`;
@@ -44,7 +45,12 @@ function wrapText(x: CanvasRenderingContext2D, t: string, a: number, b: number, 
 }
 
 /** Menggambar rapor ke canvas dan mengembalikannya sebagai data URL PNG. */
-export async function drawReportImage(def: TestDef, result: TestResult, target: number, name: string) {
+export async function drawReportImage(
+  def: TestMeta,
+  result: Pick<TestResult, "c" | "res" | "grp" | "date">,
+  target: number,
+  name: string,
+) {
   try {
     await document.fonts.ready;
   } catch {}

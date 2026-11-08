@@ -1,13 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import Link from "next/link";
+import { useRef, useState, type ReactNode } from "react";
 import { CommitInput } from "../CommitInput";
+import { itemsOf, type TestMeta } from "@/lib/history";
 import { drawReportImage, formatDate, testLabel, weakestGroups } from "@/lib/reportImage";
 import { scalePos } from "@/lib/score";
 import { KEYS, readTarget, useStored, useTarget, writeStored } from "@/lib/storage";
-import { closeTest, testStore, type TestResult } from "@/lib/testSession";
-import type { Category, TestDef } from "@/lib/types";
+import {
+  closeTest,
+  setReviewFilter,
+  testStore,
+  type ReviewFilter,
+  type RunItem,
+  type RunSection,
+  type TestResult,
+} from "@/lib/testSession";
+import type { Category } from "@/lib/types";
+import { PrintReport } from "./PrintReport";
 import { Review } from "./Review";
+
+export type ReportData = Pick<TestResult, "c" | "res" | "grp" | "date" | "hist">;
 
 const TIPS: Record<string, string> = {
   "Part A · Percakapan pendek": "Hafalkan ungkapan di tab Listening: saran, setuju, penyesalan, dan idiom.",
@@ -45,10 +58,10 @@ function SectionRow(props: { name: string; ok: number; total: number; scaled: nu
   );
 }
 
-function ReportCard({ def, result, name }: { def: TestDef; result: TestResult; name: string }) {
+export function ReportCard({ meta, result, name }: { meta: TestMeta; result: ReportData; name: string }) {
   const target = useTarget();
   const { c, res, grp, date, hist } = result;
-  const n = def.counts;
+  const n = meta.counts;
   const pass = res.total >= target;
   const rows = Object.entries(grp).map(([k, g]) => ({ k, ...g, p: g.ok / g.n }));
   const weak = weakestGroups(grp);
@@ -61,7 +74,7 @@ function ReportCard({ def, result, name }: { def: TestDef; result: TestResult; n
     <div className="report">
       <div className="rep-head">
         <div>
-          <div className="eyebrow">Rapor Latihan · {testLabel(def)}</div>
+          <div className="eyebrow">Rapor Latihan · {testLabel(meta)}</div>
           <h2>TOEFL ITP Practice Report</h2>
           <p className="rep-name">{name || <span className="muted">Tulis namamu di bawah rapor</span>}</p>
           <p className="note">{formatDate(date)}</p>
@@ -169,24 +182,34 @@ const commitName = (raw: string) => {
   writeStored(KEYS.name, raw);
 };
 
-export function Report() {
-  const session = testStore.use((s) => s);
+type ResultProps = {
+  meta: TestMeta;
+  result: ReportData;
+  sections: RunSection[];
+  items: RunItem[];
+  ans: (number | null)[];
+  filter: ReviewFilter;
+  onFilter: (filter: ReviewFilter) => void;
+  actions: ReactNode;
+  notice?: ReactNode;
+};
+
+export function ResultView({ meta, result, sections, items, ans, filter, onFilter, actions, notice }: ResultProps) {
   const storedName = useStored<string>(KEYS.name) ?? "";
   const nameInput = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState<string | null>(null);
-  if (!session?.result) return null;
-  const { def, result } = session;
   const name = storedName.trim();
 
   const makeImage = async () => {
     const typed = nameInput.current?.value ?? storedName;
     commitName(typed);
-    setImage(await drawReportImage(def, result, readTarget(), typed.trim()));
+    setImage(await drawReportImage(meta, result, readTarget(), typed.trim()));
   };
 
   return (
     <div id="simResult" className="stack">
-      <ReportCard def={def} result={result} name={name} />
+      {notice}
+      <ReportCard meta={meta} result={result} name={name} />
       <div className="panel stack">
         <label htmlFor="repNameIn" className="stack" style={{ gap: 4 }}>
           <b>Nama di rapor</b>
@@ -205,9 +228,7 @@ export function Report() {
           <button className="btn" type="button" onClick={makeImage}>
             Buat gambar rapor
           </button>
-          <button className="btn ghost" type="button" onClick={closeTest}>
-            Pilih tes lagi
-          </button>
+          {actions}
         </div>
         {image && (
           <div className="stack">
@@ -223,8 +244,51 @@ export function Report() {
             </p>
           </div>
         )}
+        <PrintReport meta={meta} result={result} sections={sections} ans={ans} name={name} />
       </div>
-      <Review />
+      <Review items={items} ans={ans} filter={filter} onFilter={onFilter} />
     </div>
+  );
+}
+
+export function Report() {
+  const session = testStore.use((s) => s);
+  if (!session?.result) return null;
+  const { def, result, sections, ans, filter } = session;
+  const { recordId } = result;
+  const hasWrong = itemsOf(sections).some((it) => ans[it.index] !== it.a);
+
+  return (
+    <ResultView
+      meta={def}
+      result={result}
+      sections={sections}
+      items={session.items}
+      ans={ans}
+      filter={filter}
+      onFilter={setReviewFilter}
+      notice={
+        !recordId && (
+          <p className="status b" role="alert">
+            Detail tes ini gagal disimpan ke riwayat, jadi soalnya tidak bisa dibuka lagi setelah halaman ditutup.
+          </p>
+        )
+      }
+      actions={
+        <>
+          {recordId && hasWrong && (
+            <Link className="btn ghost" href={`/simulasi/riwayat?id=${recordId}&mode=ulang`}>
+              Kerjakan ulang yang salah
+            </Link>
+          )}
+          <Link className="btn ghost" href="/simulasi/riwayat">
+            Lihat riwayat
+          </Link>
+          <button className="btn ghost" type="button" onClick={closeTest}>
+            Pilih tes lagi
+          </button>
+        </>
+      }
+    />
   );
 }

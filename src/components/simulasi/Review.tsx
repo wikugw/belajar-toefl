@@ -3,15 +3,18 @@
 import { flushSync } from "react-dom";
 import { LessonBody } from "../Lesson";
 import { lessonOf } from "@/lib/questions";
-import { matchesFilter, setReviewFilter, testStore, type ReviewFilter } from "@/lib/testSession";
+import { matchesFilter, type ReviewFilter, type RunItem } from "@/lib/testSession";
 
 const TOPIC_CLASS: Record<string, string> = { L: "c-listen", S: "c-struct", R: "c-read" };
 
-export function Review() {
-  const session = testStore.use((s) => s);
-  if (!session) return null;
-  const { items, ans, filter } = session;
+type Props = {
+  items: RunItem[];
+  ans: (number | null)[];
+  filter: ReviewFilter;
+  onFilter: (filter: ReviewFilter) => void;
+};
 
+export function Review({ items, ans, filter, onFilter }: Props) {
   const byTopic = new Map<string, { topic: string; n: number; bad: number }>();
   items.forEach((it, i) => {
     const stat = byTopic.get(it.topic) ?? { topic: it.topic, n: 0, bad: 0 };
@@ -30,14 +33,14 @@ export function Review() {
     <button
       type="button"
       className={filter.f === f ? "chipbtn on" : "chipbtn"}
-      onClick={() => setReviewFilter({ f, topic: null })}
+      onClick={() => onFilter({ f, topic: null })}
     >
       {label}
     </button>
   );
 
   const showTopic = (topic: string) => {
-    flushSync(() => setReviewFilter({ f: "bad", topic }));
+    flushSync(() => onFilter({ f: "bad", topic }));
     document
       .querySelector("#simRun [data-question]:not([hidden])")
       ?.scrollIntoView({ block: "start", behavior: "smooth" });

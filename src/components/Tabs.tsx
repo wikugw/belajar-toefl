@@ -13,6 +13,9 @@ const TABS = [
   { href: "/simulasi", label: "Simulasi", cls: "c-sim", sec: "simulasi" },
 ];
 
+const isActive = (href: string, pathname: string) =>
+  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
 export function Tabs() {
   const pathname = usePathname();
   const previous = useRef(pathname);
@@ -20,7 +23,7 @@ export function Tabs() {
   useEffect(initSpeech, []);
 
   useLayoutEffect(() => {
-    document.documentElement.dataset.sec = TABS.find((t) => t.href === pathname)?.sec ?? "mulai";
+    document.documentElement.dataset.sec = TABS.find((t) => isActive(t.href, pathname))?.sec ?? "mulai";
     if (previous.current === pathname) return;
     previous.current = pathname;
     stopSpeech();
@@ -31,7 +34,12 @@ export function Tabs() {
     <nav className="tabs" aria-label="Bagian">
       <div className="wrap">
         {TABS.map((t) => (
-          <Link key={t.href} href={t.href} className={t.cls} aria-current={t.href === pathname ? "page" : undefined}>
+          <Link
+            key={t.href}
+            href={t.href}
+            className={t.cls}
+            aria-current={isActive(t.href, pathname) ? "page" : undefined}
+          >
             {t.label}
           </Link>
         ))}
