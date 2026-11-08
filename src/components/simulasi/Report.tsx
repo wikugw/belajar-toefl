@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { CommitInput } from "../CommitInput";
-import { drawReportImage, formatDate, weakestGroups } from "@/lib/reportImage";
+import { drawReportImage, formatDate, testLabel, weakestGroups } from "@/lib/reportImage";
 import { scalePos } from "@/lib/score";
 import { KEYS, readTarget, useStored, useTarget, writeStored } from "@/lib/storage";
 import { closeTest, testStore, type TestResult } from "@/lib/testSession";
@@ -61,12 +61,7 @@ function ReportCard({ def, result, name }: { def: TestDef; result: TestResult; n
     <div className="report">
       <div className="rep-head">
         <div>
-          <div className="eyebrow">
-            Rapor Latihan ·{" "}
-            {def.id === "full"
-              ? `Tes Lengkap · Paket ${def.pkg}`
-              : `Tes Singkat · ${def.pkg ? `Paket ${def.pkg}` : "Acak"}`}
-          </div>
+          <div className="eyebrow">Rapor Latihan · {testLabel(def)}</div>
           <h2>TOEFL ITP Practice Report</h2>
           <p className="rep-name">{name || <span className="muted">Tulis namamu di bawah rapor</span>}</p>
           <p className="note">{formatDate(date)}</p>
@@ -147,7 +142,7 @@ function ReportCard({ def, result, name }: { def: TestDef; result: TestResult; n
                       <tr key={i}>
                         <td>{formatDate(new Date(h.t))}</td>
                         <td>
-                          {h.mode === "full" ? "Lengkap" : "Singkat"}
+                          {h.mode === "full" ? "Lengkap" : h.mode === "untimed" ? "Tanpa waktu" : "Singkat"}
                           {h.pkg ? ` P${h.pkg}` : ""}
                         </td>
                         <td className="num">
@@ -170,7 +165,9 @@ function ReportCard({ def, result, name }: { def: TestDef; result: TestResult; n
   );
 }
 
-const commitName = (raw: string) => writeStored(KEYS.name, raw);
+const commitName = (raw: string) => {
+  writeStored(KEYS.name, raw);
+};
 
 export function Report() {
   const session = testStore.use((s) => s);

@@ -5,6 +5,12 @@ export function formatDate(d: Date) {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
+export function testLabel(def: TestDef) {
+  if (def.id === "full") return `Tes Lengkap · Paket ${def.pkg}`;
+  if (def.id === "untimed") return `Tes Lengkap Tanpa Waktu · Paket ${def.pkg}`;
+  return `Tes Singkat · ${def.pkg ? `Paket ${def.pkg}` : "Acak"}`;
+}
+
 /** Tiga tipe soal dengan persentase benar terendah, [nama, rasio]. */
 export function weakestGroups(grp: TestResult["grp"]) {
   return Object.entries(grp)
@@ -77,11 +83,7 @@ export async function drawReportImage(def: TestDef, result: TestResult, target: 
   });
   x.fillStyle = "#1B2230";
   x.font = `700 26px ${M}`;
-  x.fillText(
-    `RAPOR LATIHAN · ${def.id === "full" ? `TES LENGKAP · PAKET ${def.pkg}` : `TES SINGKAT · ${def.pkg ? `PAKET ${def.pkg}` : "ACAK"}`}`,
-    70,
-    90,
-  );
+  x.fillText(`RAPOR LATIHAN · ${testLabel(def).toUpperCase()}`, 70, 90);
   x.font = `800 74px ${D}`;
   x.fillText("TOEFL ITP Practice Report", 70, 175);
   x.font = `700 44px ${B}`;

@@ -1,6 +1,7 @@
+import { draftKey, type Draft } from "./draft";
 import { resultOf } from "./questions";
 import { stopSpeech } from "./speech";
-import { KEYS, readStored, writeStored, type Best, type HistoryEntry } from "./storage";
+import { KEYS, readStored, removeStored, writeStored, type Best, type HistoryEntry } from "./storage";
 import { createStore } from "./store";
 import type { Category, Counts, Score, TestBlock, TestDef, TestItem } from "./types";
 
@@ -27,6 +28,8 @@ export type TestSession = {
   played: Record<string, true>;
   result: TestResult | null;
   filter: ReviewFilter;
+  /** false kalau draft terakhir gagal ditulis ke browser. */
+  draftSaved: boolean;
 };
 
 export const testStore = createStore<TestSession | null>(null);
@@ -91,20 +94,38 @@ function startTimer(left: number | null | undefined) {
   }, 1000);
 }
 
-export function startTest(def: TestDef) {
+function saveDraft() {
+  const s = testStore.get();
+  if (!s || s.def.id !== "untimed" || s.result) return;
+  if (s.sec === 0 && s.ans.every((a) => a == null)) return;
+  const draft: Draft = {
+    fingerprint: s.def.fingerprint as string,
+    ans: s.ans,
+    sec: s.sec,
+    savedAt: new Date().toISOString(),
+  };
+  const draftSaved = writeStored(draftKey(s.def.pkg), draft);
+  if (draftSaved !== s.draftSaved) patch({ draftSaved });
+}
+
+/** Tanpa `draft`, tes dimulai dari awal dan draft lama paket itu dihapus. */
+export function startTest(def: TestDef, draft?: Draft) {
   stopSpeech();
+  if (def.id === "untimed" && !draft) removeStored(draftKey(def.pkg));
   const { items, sections } = prepare(def);
+  const sec = draft?.sec ?? 0;
   testStore.set({
     def,
     sections,
     items,
-    ans: Array(items.length).fill(null),
-    sec: 0,
+    ans: draft?.ans ?? Array(items.length).fill(null),
+    sec,
     played: {},
     result: null,
     filter: { f: "all", topic: null },
+    draftSaved: true,
   });
-  startTimer(def.sequential ? def.sections[0].time : def.time);
+  startTimer(def.sequential ? def.sections[sec].time : def.time);
 }
 
 export function answer(index: number, choice: number) {
@@ -113,6 +134,7 @@ export function answer(index: number, choice: number) {
   const ans = s.ans.slice();
   ans[index] = choice;
   patch({ ans });
+  saveDraft();
 }
 
 export function markPlayed(key: string) {
@@ -120,13 +142,18 @@ export function markPlayed(key: string) {
   if (s && !s.played[key]) patch({ played: { ...s.played, [key]: true } });
 }
 
-export function nextSection() {
+export function goToSection(sec: number) {
   const s = testStore.get();
   if (!s) return;
   stopSpeech();
-  const sec = s.sec + 1;
   patch({ sec });
   startTimer(s.def.sections[sec].time);
+  saveDraft();
+}
+
+export function nextSection() {
+  const s = testStore.get();
+  if (s) goToSection(s.sec + 1);
 }
 
 export function finishTest() {
@@ -156,6 +183,7 @@ export function finishTest() {
     ...(readStored<HistoryEntry[]>(KEYS.history) || []),
   ];
   writeStored(KEYS.history, hist.slice(0, 20));
+  if (def.id === "untimed") removeStored(draftKey(def.pkg));
   patch({ result: { c, res, grp, date: now, hist: hist.slice(0, 5) } });
 }
 
@@ -167,6 +195,11 @@ export function matchesFilter(item: RunItem, chosen: number | null, { f, topic }
 
 export function setReviewFilter(filter: ReviewFilter) {
   patch({ filter });
+}
+
+export function saveAndExit() {
+  saveDraft();
+  closeTest();
 }
 
 export function closeTest() {

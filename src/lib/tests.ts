@@ -120,6 +120,38 @@ function shortDef(
 
 export const FULLS = FULL_PACKAGES.map((P, i) => buildFull(P, i + 1));
 
+const UNTIMED_DIRECTIONS = [
+  "Audio boleh diputar ulang dan tidak ada batas waktu. Di tes asli, setiap audio dan pertanyaan hanya diputar satu kali dan pertanyaannya tidak tertulis.",
+  "Tidak ada batas waktu. Di tes asli, bagian ini harus selesai dalam 25 menit.",
+  "Lima teks, masing-masing 10 soal, tanpa batas waktu. Di tes asli, bagian ini harus selesai dalam 55 menit.",
+];
+
+function hash(text: string) {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = (h * 33 + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/* Soal sama dengan tes lengkap, tanpa waktu dan kunci section. Skornya tidak masuk skor terbaik. */
+function buildUntimed(P: FullPackage, full: TestDef): TestDef {
+  return {
+    ...full,
+    id: "untimed",
+    playOnce: false,
+    sections: full.sections.map((sec, i) => ({
+      ...sec,
+      sub: `Paket ${full.pkg} · ${sec.blocks.reduce((n, b) => n + b.items.length, 0)} soal · tanpa waktu`,
+      time: null,
+      directions: UNTIMED_DIRECTIONS[i],
+    })),
+    storeKey: null,
+    pkgKey: null,
+    fingerprint: hash(JSON.stringify(P)),
+  };
+}
+
+export const UNTIMED = FULL_PACKAGES.map((P, i) => buildUntimed(P, FULLS[i]));
+
 /* bank soal untuk tes singkat */
 const BANK = {
   L: FULLS.flatMap((F) => F.sections[0].blocks[0].items),

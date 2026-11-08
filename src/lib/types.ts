@@ -66,7 +66,7 @@ export type TestSection = {
 };
 export type Counts = Record<Category, number>;
 export type TestDef = {
-  id: "full" | "short";
+  id: "full" | "short" | "untimed";
   pkg: number | null;
   sequential: boolean;
   playOnce: boolean;
@@ -76,8 +76,11 @@ export type TestDef = {
   /** Mengonversi jumlah benar per bagian ke skor. */
   score: (correct: Counts) => Score;
   counts: Counts;
-  storeKey: string;
+  /** null: skor tidak dihitung sebagai skor terbaik. */
+  storeKey: string | null;
   pkgKey: string | null;
+  /** Hanya tes tanpa waktu: penanda isi paket untuk memvalidasi draft. */
+  fingerprint?: string;
 };
 
 export type Score = { total: number; sl: number; ss: number; sr: number };

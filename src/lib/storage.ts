@@ -10,7 +10,7 @@ export const KEYS = {
 };
 
 export type Best = { total: number };
-export type HistoryEntry = { t: string; mode: "full" | "short"; pkg: number | null; total: number };
+export type HistoryEntry = { t: string; mode: "full" | "short" | "untimed"; pkg: number | null; total: number };
 
 const cache = new Map<string, { raw: string | null; value: unknown }>();
 const listeners = new Set<() => void>();
@@ -30,9 +30,21 @@ export function readStored<T>(key: string): T | null {
   return value as T | null;
 }
 
+/** Mengembalikan false kalau browser menolak menyimpan (penuh atau diblokir). */
 export function writeStored(key: string, value: unknown) {
+  let saved = true;
   try {
     localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    saved = false;
+  }
+  listeners.forEach((fn) => fn());
+  return saved;
+}
+
+export function removeStored(key: string) {
+  try {
+    localStorage.removeItem(key);
   } catch {}
   listeners.forEach((fn) => fn());
 }
